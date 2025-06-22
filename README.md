@@ -1,4 +1,4 @@
-# Listen Sounds Mod
+# View Sounds Mod
 
 A client-side Minecraft Forge mod for version 1.20.1 that visualizes sounds with a grayscale overlay and sound circles when crouching.
 
@@ -32,14 +32,6 @@ This mod is currently in development. The sound circle positioning is simplified
 - Sound circle positioning is approximate (needs proper 3D to 2D projection)
 - Only sounds with known world positions are tracked
 - Basic circle rendering (will be improved with proper graphics)
-
-### Planned Features
-
-- Improved sound circle positioning
-- Better visual effects for sound circles
-- More configuration options
-- Sound type filtering
-- Performance optimizations
 
 ## License
 
