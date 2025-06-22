@@ -1,0 +1,6 @@
+{
+  "key.view_sounds.disable": "Toggle View Sounds Mod",
+  "key.categories.view_sounds": "View Sounds",
+  "mod.view_sounds.name": "View Sounds",
+  "mod.view_sounds.description": "Automatically visualizes sounds when crouching for a configurable time"
+} 
