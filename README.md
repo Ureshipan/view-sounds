@@ -12,10 +12,10 @@ A client-side Minecraft Forge mod for version 1.20.1 that visualizes sounds with
 
 ## How to Use
 
-1. **Enable the mod**: Press Y to toggle sound visualization on/off
+1. **Enable the mod**: Press L Alt to toggle sound visualization on/off
 2. **Activate visualization**: Crouch (hold Shift) while the mod is enabled
 3. **View sounds**: White circles will appear at the source of any sounds with known positions
-4. **Disable**: Either press Y again or stop crouching
+4. **Disable**: Either press L ALt again or stop crouching
 
 ## Installation
 
