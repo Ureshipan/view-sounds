@@ -17,6 +17,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraft.util.Mth;
 
 import java.util.List;
 
@@ -60,63 +61,14 @@ public class SoundVisualizer {
             System.out.println("Rendering sound at position: " + sound.position);
         }
 
-        // Используем позицию звука напрямую
-        Vec3 soundPos = sound.position;
-        Vec3 playerPos = minecraft.player.position();
-        Vec3 direction = soundPos.subtract(playerPos).normalize();
-        
-        // Получаем направление взгляда игрока
-        float yaw = minecraft.player.getYRot();
-        float pitch = minecraft.player.getXRot();
-        
-        // Конвертируем в радианы
-        double yawRad = Math.toRadians(yaw);
-        
-        // Вычисляем относительное направление
-        double dx = direction.x;
-        double dy = direction.y;
-        double dz = direction.z;
-        
-        // Поворачиваем на основе угла камеры (исправляем отзеркаливание)
-        double rotatedX = dx * Math.cos(-yawRad) - dz * Math.sin(-yawRad);
-        double rotatedZ = dx * Math.sin(-yawRad) + dz * Math.cos(-yawRad);
-        
-        // Получаем FOV игрока
-        double fov = minecraft.options.fov().get();
-        double fovRad = Math.toRadians(fov);
-        
-        // Простая проекция на экран с учетом FOV
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
-        
-        // Вычисляем углы для проекции
-        double horizontalAngle = Math.atan2(rotatedX, rotatedZ);
-        
-        // Вычисляем вертикальный угол относительно игрока
-        double distance = Math.sqrt(rotatedX * rotatedX + rotatedZ * rotatedZ);
-        double verticalAngle = - Math.atan2(dy, distance);
-        
-        // Учитываем pitch игрока
-        double pitchRad = Math.toRadians(pitch);
-        verticalAngle -= pitchRad;
-        
-        // Ограничиваем углы FOV
-        double maxHorizontalAngle = fovRad / 2.0;
-        double maxVerticalAngle = fovRad / 2.0; // Используем тот же FOV для вертикали
-        
-        if (Math.abs(horizontalAngle) > maxHorizontalAngle * 2 || Math.abs(verticalAngle) > maxVerticalAngle) {
+        // Преобразуем координаты мира в координаты экрана
+        int[] screenCoords = worldToScreenCoordinates(sound.position);
+        if (screenCoords == null) {
             return; // Объект вне поля зрения
         }
         
-        // Проецируем на экран с правильной перспективой
-        // Для горизонтали используем тангенс для правильного масштабирования
-        int screenX = (screenWidth / 2 - (int)((Math.tan(horizontalAngle) / Math.tan(maxHorizontalAngle) * screenWidth / 2) / 2.5));
-        // Для вертикали используем линейную проекцию, но с правильным вычислением угла
-        int screenY = screenHeight / 2 + (int)(verticalAngle / maxVerticalAngle * screenHeight / 2);
-        
-        // Ограничиваем в пределах экрана
-        screenX = Math.max(10, Math.min(screenWidth - 10, screenX));
-        screenY = Math.max(10, Math.min(screenHeight - 10, screenY));
+        int screenX = screenCoords[0];
+        int screenY = screenCoords[1];
         
         if (ModConfig.DEBUG_MODE.get()) {
             System.out.println("Rendering circle at screen: " + screenX + ", " + screenY);
@@ -146,6 +98,73 @@ public class SoundVisualizer {
 
         // Рендерим пульсирующий круг
         renderPulsingCircle(guiGraphics, screenX, screenY, circleSize, alpha, entityColor);
+    }
+
+    /**
+     * Преобразует координаты мира в координаты экрана
+     * @param worldPosition позиция в мире
+     * @return массив [x, y] координат экрана или null если объект вне поля зрения
+     */
+    private static int[] worldToScreenCoordinates(Vec3 worldPosition) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) return null;
+    
+        // Получаем позицию камеры (глаз игрока)
+        Vec3 cameraPos = minecraft.player.getEyePosition(1.0f); // Исправлено для получения точной позиции глаз
+        Vec3 direction = worldPosition.subtract(cameraPos);
+        
+        // Углы поворота камеры в радианах
+        float yaw = minecraft.player.getYRot();
+        float pitch = minecraft.player.getXRot();
+        double yawRad = Math.toRadians(yaw);
+        double pitchRad = Math.toRadians(pitch);
+        
+        // Поворот вектора относительно камеры
+        double dx = direction.x;
+        double dy = direction.y;
+        double dz = direction.z;
+        
+        // 1. Компенсация рысканья (yaw)
+        double cosYaw = Math.cos(-yawRad); // Исправлен знак для согласованности с системой координат
+        double sinYaw = Math.sin(-yawRad);
+        double rotatedX = dx * cosYaw - dz * sinYaw; // Исправлена формула поворота
+        double rotatedZ = dx * sinYaw + dz * cosYaw;
+        
+        // 2. Компенсация тангажа (pitch)
+        double cosPitch = Math.cos(pitchRad);
+        double sinPitch = Math.sin(pitchRad);
+        double cameraY = dy * cosPitch + rotatedZ * sinPitch; // Исправлена формула поворота
+        double cameraZ = rotatedZ * cosPitch - dy * sinPitch;
+        
+        // Если объект позади камеры
+        if (cameraZ <= 0.1) return null; // Добавлен небольшой порог для стабильности
+        
+        // Параметры экрана и проекции
+        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        double aspectRatio = (double) screenWidth / screenHeight;
+        double fov = minecraft.options.fov().get();
+        double fovRad = Math.toRadians(fov);
+        
+        // Корректный расчет FOV с учетом соотношения сторон
+        double verticalFactor = Math.tan(fovRad / 2);
+        double horizontalFactor = verticalFactor * aspectRatio; // Горизонтальный FOV
+        
+        // Нормализованные координаты (-1..1)
+        double nx = rotatedX / (cameraZ * horizontalFactor);
+        double ny = cameraY / (cameraZ * verticalFactor); // Убран лишний минус
+        
+        // Проверка видимости объекта
+        if (Math.abs(nx) > 1 || Math.abs(ny) > 1) return null;
+        
+        // Преобразование в координаты экрана
+        int screenX = (int) (screenWidth / 2 * (1 - nx)); // Исправлен знак
+        int screenY = (int) (screenHeight / 2 * (1 - ny)); // Инвертирован знак
+        
+        return new int[]{
+            Math.max(0, Math.min(screenX, screenWidth)),
+            Math.max(0, Math.min(screenY, screenHeight))
+        };
     }
 
     private static void renderPulsingCircle(GuiGraphics guiGraphics, int x, int y, int size, float alpha, int entityColor) {
