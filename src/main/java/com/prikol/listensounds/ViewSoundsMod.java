@@ -90,7 +90,7 @@ public class ViewSoundsMod {
         
         if (isCrouching) {
             crouchTimer++;
-            int requiredTicks = ModConfig.CROUCH_ACTIVATION_DELAY.get() * 20; // 20 тиков в секунде
+            int requiredTicks = (int)(ModConfig.CROUCH_ACTIVATION_DELAY.get() * 20.0f); // 20 тиков в секунде
             
             if (crouchTimer >= requiredTicks && !isAutoEnabled) {
                 isAutoEnabled = true;

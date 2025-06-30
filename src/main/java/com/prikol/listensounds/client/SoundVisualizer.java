@@ -56,23 +56,14 @@ public class SoundVisualizer {
             return;
         }
 
-        // Находим ближайшую сущность к источнику звука
-        Entity nearestEntity = findNearestEntityToSound(sound);
-        if (nearestEntity == null) {
-            if (ModConfig.DEBUG_MODE.get()) {
-                System.out.println("No entity found for sound at " + sound.position);
-            }
-            return;
-        }
-
         if (ModConfig.DEBUG_MODE.get()) {
-            System.out.println("Found entity: " + nearestEntity.getType() + " at " + nearestEntity.position());
+            System.out.println("Rendering sound at position: " + sound.position);
         }
 
-        // Простая проекция на основе направления взгляда
-        Vec3 entityPos = nearestEntity.position();
+        // Используем позицию звука напрямую
+        Vec3 soundPos = sound.position;
         Vec3 playerPos = minecraft.player.position();
-        Vec3 direction = entityPos.subtract(playerPos).normalize();
+        Vec3 direction = soundPos.subtract(playerPos).normalize();
         
         // Получаем направление взгляда игрока
         float yaw = minecraft.player.getYRot();
@@ -155,29 +146,6 @@ public class SoundVisualizer {
 
         // Рендерим пульсирующий круг
         renderPulsingCircle(guiGraphics, screenX, screenY, circleSize, alpha, entityColor);
-    }
-
-    private static Entity findNearestEntityToSound(SoundInfo sound) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.level == null) {
-            return null;
-        }
-
-        Entity nearestEntity = null;
-        double nearestDistance = Double.MAX_VALUE;
-        Vec3 soundPos = sound.position;
-
-        for (Entity entity : minecraft.level.entitiesForRendering()) {
-            if (entity == minecraft.player) continue;
-            
-            double distance = entity.distanceToSqr(soundPos.x, soundPos.y, soundPos.z);
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
-                nearestEntity = entity;
-            }
-        }
-
-        return nearestEntity;
     }
 
     private static void renderPulsingCircle(GuiGraphics guiGraphics, int x, int y, int size, float alpha, int entityColor) {

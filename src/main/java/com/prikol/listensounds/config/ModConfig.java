@@ -13,7 +13,7 @@ public class ModConfig {
     
     // Основные настройки мода
     public static final ForgeConfigSpec.BooleanValue MOD_ENABLED;
-    public static final ForgeConfigSpec.IntValue CROUCH_ACTIVATION_DELAY;
+    public static final ForgeConfigSpec.DoubleValue CROUCH_ACTIVATION_DELAY;
     public static final ForgeConfigSpec.ConfigValue<String> DISABLE_KEY;
     
     // Настройка максимального расстояния
@@ -53,7 +53,7 @@ public class ModConfig {
                 .define("modEnabled", true);
         CROUCH_ACTIVATION_DELAY = BUILDER
                 .comment("Time in seconds to wait while crouching before activating sound visualization")
-                .defineInRange("crouchActivationDelay", 3, 1, 10);
+                .defineInRange("crouchActivationDelay", 1.0, 0.0, 10.0);
         MAX_SOUND_DISTANCE = BUILDER
                 .comment("Maximum distance (in blocks) for sound visualization")
                 .defineInRange("maxSoundDistance", 20, 1, 100);
